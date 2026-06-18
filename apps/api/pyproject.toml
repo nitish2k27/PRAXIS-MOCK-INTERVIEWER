@@ -1,0 +1,73 @@
+[project]
+name = "praxis-api"
+version = "0.1.0"
+description = "Praxis FastAPI backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2",
+    "pydantic-settings",
+    "sqlalchemy>=2",
+    "alembic",
+    "asyncpg",
+    "aiosqlite",
+    "python-jose[cryptography]",
+    "authlib",
+    "itsdangerous",
+    "httpx",
+    "python-multipart",
+    "redis>=5",
+    "boto3",
+    "langgraph",
+    "langchain",
+    "chromadb",
+    "websockets",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+    "mypy",
+    "types-python-jose",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["praxis*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "C4", "SIM"]
+# B008: FastAPI uses Depends(...)/Cookie(...) as default values — that's the idiom.
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["praxis/db/alembic/"]
+
+[[tool.mypy.overrides]]
+module = [
+    "authlib.*",
+    "jose.*",
+    "boto3",
+    "botocore.*",
+    "chromadb.*",
+    "langgraph.*",
+    "langchain.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

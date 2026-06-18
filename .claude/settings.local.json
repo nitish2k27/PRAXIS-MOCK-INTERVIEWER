@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vitest *)",
+      "Bash(npx eslint *)",
+      "Bash(.venv/Scripts/python.exe -c ' *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\user\\Desktop\\praxis\\apps\\web"
+    ]
+  }
+}
