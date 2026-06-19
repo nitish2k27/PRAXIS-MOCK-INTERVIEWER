@@ -18,6 +18,49 @@ export type Session = {
   fit_score: number | null;
 };
 
+export type Competency = {
+  name: string;
+  weight: number;
+  covered: boolean;
+  coverage: number;
+  evidence: string | null;
+};
+
+export type ScreeningConfig = {
+  competency_map: { competencies: Competency[]; coverage_score: number };
+  fit: {
+    fit_score: number;
+    proceed: boolean;
+    rationale: string;
+    dense_similarity: number;
+    coverage: number;
+  };
+  resume_summary: Record<string, unknown>;
+  jd_summary: Record<string, unknown>;
+};
+
+export type SessionDetail = {
+  id: string;
+  status: string;
+  resume_id: string | null;
+  jd_id: string | null;
+  company_profile_id: string | null;
+  fit_score: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  config_json: ScreeningConfig | null;
+};
+
+export type FitBand = "Strong" | "Promising" | "Mixed" | "Weak";
+
+/** Map a 0..1 fit score to a display band. Single source of truth for the label. */
+export function fitBand(score: number): FitBand {
+  if (score >= 0.8) return "Strong";
+  if (score >= 0.6) return "Promising";
+  if (score >= 0.4) return "Mixed";
+  return "Weak";
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, { credentials: "include", ...init });
   if (!res.ok) throw new Error(`request failed: ${res.status}`);
@@ -56,7 +99,7 @@ export function useLogout() {
 
 export function useUploadResume() {
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (file: File): Promise<{ id: string }> => {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch(`${API}/resumes`, {
@@ -65,14 +108,14 @@ export function useUploadResume() {
         body: fd,
       });
       if (!res.ok) throw new Error(`resume upload failed: ${res.status}`);
-      return res.json();
+      return (await res.json()) as { id: string };
     },
   });
 }
 
 export function useUploadJD() {
   return useMutation({
-    mutationFn: async (input: { rawText?: string; file?: File }) => {
+    mutationFn: async (input: { rawText?: string; file?: File }): Promise<{ id: string }> => {
       const fd = new FormData();
       if (input.rawText) fd.append("raw_text", input.rawText);
       if (input.file) fd.append("file", input.file);
@@ -82,8 +125,32 @@ export function useUploadJD() {
         body: fd,
       });
       if (!res.ok) throw new Error(`jd upload failed: ${res.status}`);
-      return res.json();
+      return (await res.json()) as { id: string };
     },
+  });
+}
+
+export function useRunScreening() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { resumeId: string; jdId: string }) =>
+      apiFetch<SessionDetail>("/screening", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume_id: input.resumeId, jd_id: input.jdId }),
+      }),
+    onSuccess: (detail) => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      qc.setQueryData(["session", detail.id], detail);
+    },
+  });
+}
+
+export function useSession(id: string) {
+  return useQuery<SessionDetail>({
+    queryKey: ["session", id],
+    queryFn: () => apiFetch<SessionDetail>(`/sessions/${id}`),
+    enabled: Boolean(id),
   });
 }
 

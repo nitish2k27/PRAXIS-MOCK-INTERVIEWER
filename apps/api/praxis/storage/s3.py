@@ -33,3 +33,17 @@ class S3Storage:
         if self._public_base:
             return f"{self._public_base.rstrip('/')}/{key}"
         return f"s3://{self._bucket}/{key}"
+
+    async def read(self, url: str) -> bytes:
+        key = self._key_from_url(url)
+        obj = await asyncio.to_thread(self._client.get_object, Bucket=self._bucket, Key=key)
+        body: bytes = await asyncio.to_thread(obj["Body"].read)
+        return body
+
+    def _key_from_url(self, url: str) -> str:
+        if url.startswith("s3://"):
+            # s3://bucket/key... → drop scheme + bucket segment.
+            return url[len("s3://") :].split("/", 1)[1]
+        if self._public_base and url.startswith(self._public_base):
+            return url[len(self._public_base.rstrip("/")) + 1 :]
+        raise ValueError(f"cannot derive S3 key from url: {url}")

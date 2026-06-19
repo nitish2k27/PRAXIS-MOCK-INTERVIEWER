@@ -10,8 +10,29 @@ Claude Code. Keep it accurate; it is the main defense against drift.
 - Requirements & latency targets: `docs/04-functional-nonfunctional-requirements.md`
 
 ## Current phase
-> **Phase 1 — Foundations.** Do not build ahead of this phase.
+> **Phase 2 — Voice layer (NOT STARTED).** Do not build ahead of this phase.
 > (Update this line every time you start a new phase.)
+>
+> Phase 0 (Foundations: auth, DB schema, upload + storage, app shell) is **complete**.
+> Phase 1 (Ingestion & screening) is **complete** — see summary below. Phase 2 work
+> (faster-whisper STT + silero-vad, Piper TTS, WebSocket audio + barge-in, latency
+> instrumentation; docs/03) has **not** begun.
+>
+> **Phase 1 — DONE.** Inputs become structured, persisted, visible state:
+> - Adapters: `orchestrator/llm.py` (`LLMAdapter`/`GroqLLM`/`FakeLLM`),
+>   `retrieval/embeddings.py` (`EmbeddingsAdapter`/`BgeEmbeddings`/`FakeEmbeddings`).
+> - `ingestion/` extract (pdfplumber/docx2txt via storage adapter) + parse (LLM JSON →
+>   `ResumeParsed`/`JDParsed`, persisted to `parsed_json`) + competency map.
+> - `screening/` fit (`w_dense·cosine + w_coverage·LLM-coverage`) + company archetype
+>   resolution. `POST /screening` pipeline + `GET /sessions/{id}`.
+> - Web: `POST /screening` after upload; result (fit + band + archetype + top
+>   competencies + rationale) on session detail; fit score in dashboard list.
+> - 3 company archetypes seeded (`python -m praxis.db.seeds.company_profiles`).
+>
+> Phase 1 decisions (locked, still in force): competency map persists in
+> `interview_sessions.config_json` (no schema change); screening runs via an explicit
+> `POST /screening {resume_id, jd_id}`; deps added — pdfplumber, docx2txt, groq,
+> sentence-transformers (all recorded in docs/02). Storage adapter gained `read(url)`.
 
 ## Non-negotiables (do not violate)
 - The stack is LOCKED in docs/02. Never add a library outside it without recording a

@@ -30,6 +30,12 @@ panel, history/report views. Read the root `CLAUDE.md` first.
 - Dev: `npm run dev`
 - Quality gate: `tsc --noEmit && npm run lint && npm run test`
 
-## Phase 0 scope here
-App shell: sign-in screen ("Continue with Google"), dashboard with an (empty) history
-list, and the resume/JD upload form. No interview UI yet.
+## Phase 1 scope here (Ingestion & screening — light surfacing)
+Phase 0 (sign-in, dashboard with history list, resume/JD upload form) is **done**. The
+backend is the heavy part of Phase 1; the web job is only to make the screening result
+**visible**:
+- After upload, call `POST /screening {resume_id, jd_id}` (React Query mutation).
+- Render the result on session detail and the dashboard: fit score + band, resolved
+  company archetype, top weighted competencies, and the fit rationale.
+- Server stays the source of truth; cache via React Query, no browser storage of app data.
+- No interview/voice UI, no Monaco yet — those are Phase 2+.

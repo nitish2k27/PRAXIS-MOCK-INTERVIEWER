@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Me } from "../lib/api";
-import { useLogout, useSessions } from "../lib/api";
+import { fitBand, useLogout, useSessions } from "../lib/api";
 
 export default function Dashboard({ user }: { user: Me }) {
   const sessions = useSessions(true);
@@ -41,17 +41,29 @@ export default function Dashboard({ user }: { user: Me }) {
         {sessions.data && sessions.data.length > 0 && (
           <ul className="space-y-2">
             {sessions.data.map((s) => (
-              <li
-                key={s.id}
-                className="p-3 rounded border bg-white flex justify-between"
-              >
-                <div>
-                  <div className="text-sm text-slate-600">
-                    {s.company_profile_id ?? "—"}
+              <li key={s.id}>
+                <Link
+                  to={`/sessions/${s.id}`}
+                  className="p-3 rounded border bg-white flex items-center justify-between hover:bg-slate-50"
+                >
+                  <div>
+                    <div className="text-sm text-slate-600">
+                      {s.company_profile_id ?? "—"}
+                    </div>
+                    <div className="text-xs text-slate-400">{s.started_at}</div>
                   </div>
-                  <div className="text-xs text-slate-400">{s.started_at}</div>
-                </div>
-                <div className="text-sm">{s.status}</div>
+                  <div className="flex items-center gap-3 text-sm">
+                    {s.fit_score != null && (
+                      <span className="tabular-nums">
+                        {Math.round(s.fit_score * 100)}{" "}
+                        <span className="text-slate-400">
+                          · {fitBand(s.fit_score)}
+                        </span>
+                      </span>
+                    )}
+                    <span className="text-slate-500">{s.status}</span>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>

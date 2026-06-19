@@ -36,3 +36,6 @@ ml/datasets/*
 *.sqlite
 *.db
 chroma/
+
+# Runtime uploads (user data — never commit)
+apps/api/uploads/

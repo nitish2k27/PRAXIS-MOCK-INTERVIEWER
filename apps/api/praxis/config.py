@@ -52,6 +52,24 @@ class Settings(BaseSettings):
     s3_bucket: str = "praxis"
     s3_public_base_url: str | None = None
 
+    # AI providers (Phase 1+)
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+
+    # Screening — fit score (Phase 1). fit = w_dense·cosine + w_coverage·LLM-coverage.
+    fit_w_dense: float = 0.4
+    fit_w_coverage: float = 0.6
+    fit_proceed_threshold: float = 0.6
+
+    # Screening — competency map weighting (Phase 1)
+    competency_match_threshold: float = 0.6
+    competency_must_have_weight: float = 1.0
+    competency_required_weight: float = 0.6
+
+    # Screening — company archetype resolution (Phase 1)
+    default_company_archetype: str = "faang-structured"
+
     # Chroma (Phase 1+)
     chroma_host: str = "localhost"
     chroma_port: int = 8001

@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from praxis.auth import router as auth_router
 from praxis.config import settings
+from praxis.routes.screening import router as screening_router
 from praxis.routes.sessions import router as sessions_router
 from praxis.routes.uploads import router as uploads_router
 
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(uploads_router)
 app.include_router(sessions_router)
+app.include_router(screening_router)
 
 
 @app.get("/health")

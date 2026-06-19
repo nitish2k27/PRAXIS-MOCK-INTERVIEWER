@@ -23,6 +23,10 @@ class LocalStorage:
     async def get_url(self, key: str) -> str:
         return f"file://{(self.base / key).resolve().as_posix()}"
 
+    async def read(self, url: str) -> bytes:
+        path = Path(url[len("file://") :] if url.startswith("file://") else url)
+        return await asyncio.to_thread(path.read_bytes)
+
 
 def _write(path: Path, fileobj: BinaryIO) -> None:
     with path.open("wb") as out:

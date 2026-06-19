@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Me } from "../lib/api";
-import { useUploadJD, useUploadResume } from "../lib/api";
+import { useRunScreening, useUploadJD, useUploadResume } from "../lib/api";
 
 export default function NewInterview({ user: _user }: { user: Me }) {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ export default function NewInterview({ user: _user }: { user: Me }) {
   const [error, setError] = useState<string | null>(null);
   const uploadResume = useUploadResume();
   const uploadJD = useUploadJD();
+  const runScreening = useRunScreening();
 
   const submit = async () => {
     setError(null);
@@ -23,18 +24,23 @@ export default function NewInterview({ user: _user }: { user: Me }) {
       return;
     }
     try {
-      await uploadResume.mutateAsync(resume);
-      await uploadJD.mutateAsync({
+      const resumeRes = await uploadResume.mutateAsync(resume);
+      const jdRes = await uploadJD.mutateAsync({
         rawText: jdText.trim() || undefined,
         file: jdFile ?? undefined,
       });
-      navigate("/");
+      const session = await runScreening.mutateAsync({
+        resumeId: resumeRes.id,
+        jdId: jdRes.id,
+      });
+      navigate(`/sessions/${session.id}`);
     } catch (e) {
       setError(String(e));
     }
   };
 
-  const busy = uploadResume.isPending || uploadJD.isPending;
+  const busy =
+    uploadResume.isPending || uploadJD.isPending || runScreening.isPending;
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -76,7 +82,11 @@ export default function NewInterview({ user: _user }: { user: Me }) {
             disabled={busy}
             onClick={submit}
           >
-            {busy ? "Uploading…" : "Upload"}
+            {runScreening.isPending
+              ? "Screening…"
+              : busy
+                ? "Uploading…"
+                : "Upload & screen"}
           </button>
           <button
             className="px-4 py-2 rounded border hover:bg-slate-100"

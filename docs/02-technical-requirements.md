@@ -101,3 +101,4 @@ praxis/
 | init | faster-whisper + Piper as defaults | cost/self-host; swap to Deepgram/ElevenLabs if latency/quality forces it |
 | init | ChromaDB over Weaviate | simplest for solo build at this scale |
 | init | LoRA scorer over scoring with the main LLM | latency + consistency in the real-time loop |
+| Phase 1 | `pdfplumber` (PDF) + `docx2txt` (DOCX) for resume/JD text extraction | referenced in docs/01/03 but absent from the locked list; both are lightweight, pure-Python, behind the storage/ingestion layer (no provider lock-in) |

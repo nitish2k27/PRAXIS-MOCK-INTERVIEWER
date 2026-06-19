@@ -42,7 +42,28 @@ scoring, voice adapters. Read the root `CLAUDE.md` first.
 - Migrate: `alembic revision --autogenerate -m "msg"` then `alembic upgrade head`
 - Quality gate: `ruff check . && ruff format --check . && mypy . && pytest`
 
-## Phase 0 scope here
-Auth (Google OAuth + JWT cookies + users upsert + route guard), DB models + first
-migration for all core tables, file upload → object storage, and the FastAPI app shell.
-Nothing from later phases.
+## Phase 1 scope here (Ingestion & screening)
+Phase 0 (auth, DB models + first migration, upload → object storage, app shell) is
+**done**. This phase turns uploaded inputs into structured, persisted state:
+
+1. **Provider adapters first** — `orchestrator/llm.py` (`LLMAdapter` Protocol + `GroqLLM`
+   using `groq` SDK at `groq_model` + deterministic `FakeLLM` + `get_llm`) and
+   `retrieval/embeddings.py` (`EmbeddingsAdapter` Protocol + `BgeEmbeddings`
+   sentence-transformers `bge-small-en-v1.5` + deterministic `FakeEmbeddings` +
+   `get_embeddings`). This is the first LLM/embeddings use in the repo.
+2. **`ingestion/`** — `extract.py` (pdf/docx → text via pdfplumber/docx2txt, read through
+   the storage adapter, blocking work in an executor); `parse.py` (text → structured JSON
+   via the LLM adapter); models in `schemas/parsing.py` (`ResumeParsed`, `JDParsed`).
+   Persist onto `resumes.parsed_json` / `job_descriptions.parsed_json`.
+3. **`ingestion/competency.py` + `screening/`** — weighted competency map (JD must-haves ×
+   resume signals, embeddings-assisted); `fit.py` fit score = `w_dense·cosine +
+   w_coverage·LLM-coverage-rubric` + rationale; `company.py` resolves a seeded archetype.
+   Types in `schemas/screening.py`. Seed 3 archetypes via `db/seeds/company_profiles.py`.
+4. **`routes/screening.py`** — `POST /screening {resume_id, jd_id}` runs the pipeline and
+   creates the `interview_sessions` row (`fit_score`, `company_profile_id`, and the
+   competency map + rationale + parsed summaries in `config_json`). Add `GET /sessions/{id}`.
+
+Locked decisions: competency map lives in `interview_sessions.config_json` (no schema
+change / no migration this phase); providers are injected via FastAPI deps so tests use
+the fakes; new model names + fit weights/threshold go in `config.py` + `.env`. Nothing
+from later phases (no voice, no orchestrator graph, no scoring rubric runtime).
